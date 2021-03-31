@@ -23,11 +23,11 @@ import java.util.Comparator;
 public class AgentCreator extends Agent {
     private String name;
     private List<AgentController> deliveryMansControllers = new LinkedList<>();
-    private List<AgentController> itemsControllers = new LinkedList<>();
+    //private List<AgentController> itemsControllers = new LinkedList<>();
     private List<AgentController> shopsControllers = new LinkedList<>();
     private String fileName;
     private String deliveryManPATH = "Agents.DeliveryMan";
-    private String itemPATH = "Agents.Items";
+    //private String itemPATH = "Agents.Items";
     private String shopPATH = "Agents.Shop";
 
     private class DeliveryMan{
@@ -36,11 +36,11 @@ public class AgentCreator extends Agent {
         String items;
     }
 
-    private class Item {
-        String name;
-        int volume;
-        String goal;
-    }
+//    private class Item {
+//        String name;
+//        int volume;
+//        String goal;
+//    }
 
     private class Shop {
         String name;
@@ -48,6 +48,7 @@ public class AgentCreator extends Agent {
         int timeNeedToDelivery;
         int startWork;
         int endWork;
+        String items;
     }
 
     protected void setup() {
@@ -64,10 +65,10 @@ public class AgentCreator extends Agent {
                     deliveryMan.start();
                 }
                 Thread.sleep(1000);
-                for (AgentController item : itemsControllers) {
-                    item.start();
-                }
-                Thread.sleep(1000);
+//                for (AgentController item : itemsControllers) {
+//                    item.start();
+//                }
+//                Thread.sleep(1000);
                 for (AgentController shop : shopsControllers) {
                     shop.start();
                 }
@@ -88,7 +89,7 @@ public class AgentCreator extends Agent {
     protected void createAgents(String filename) {
         File file = new File(filename);
         DeliveryMan[] myDeliveryMans = null;
-        Item[] myItems = null;
+        //Item[] myItems = null;
         Shop[] myShops = null;
         try {
             FileReader reader = new FileReader(file);
@@ -105,8 +106,8 @@ public class AgentCreator extends Agent {
             }
             String[] counts = buffreader.readLine().split(";");
             myShops = new Shop[Integer.valueOf(counts[0])];
-            myItems = new Item[Integer.valueOf(counts[1])];
-            int j = 0;
+            //myItems = new Item[Integer.valueOf(counts[1])];
+            //int j = 0;
             int orderVolume = 0;
             for (int i = 0; i < Integer.valueOf(counts[0]); i++) {
                 String line = buffreader.readLine();
@@ -117,17 +118,22 @@ public class AgentCreator extends Agent {
                 shop.startWork = Integer.valueOf(data[2]);
                 shop.endWork =Integer.valueOf(data[3]);
                 count = Integer.valueOf(data[4]);
-                for(; j < j + count; j++){
+                String items = "";
+                for(int j = 0; j < count; j++){
                     line = buffreader.readLine();
                     data = line.split(";");
-                    Item item = new Item();
-                    item.name = data[0];
-                    item.volume = Integer.valueOf(data[1]);
-                    orderVolume = orderVolume + item.volume;
-                    item.goal = shop.name;
-                    myItems[j] = item;
+//                    Item item = new Item();
+//                    item.name = data[0];
+//                    item.volume = Integer.valueOf(data[1]);
+//                    orderVolume = orderVolume + item.volume;
+//                    item.goal = shop.name;
+//                    myItems[j] = item;
+                    items += (data[0] + ";" + data[1] + ";");
+                    orderVolume = orderVolume + Integer.valueOf(data[1]);
+
                 }
                 shop.orderVolume = orderVolume;
+                shop.items = items;
                 orderVolume = 0;
                 myShops[i] = shop;
             }
@@ -135,27 +141,27 @@ public class AgentCreator extends Agent {
         } catch (Exception e) {
             System.out.println("Error");
         }
-        itemsControllers = createItemsControllers(myItems);
+        //itemsControllers = createItemsControllers(myItems);
         shopsControllers= createShopsControllers(myShops);
         deliveryMansControllers = createDeliveryMansControllers(myDeliveryMans, myShops);
     }
 
-    private List<AgentController> createItemsControllers(Item[] items) {
-        AgentContainer container = this.getContainerController();
-        List<AgentController> controllersList = new LinkedList<>();
-        for(int i = 0; i < items.length; i++) {
-            Object[] args = new Object[2];
-            args[0] = items[i].volume;
-            args[1] = items[i].goal;
-            try{
-                controllersList.add(container.createNewAgent(items[i].name, itemPATH, args));
-            }
-            catch (Exception e){
-                System.out.println("Error");
-            }
-        }
-        return controllersList;
-    }
+//    private List<AgentController> createItemsControllers(Item[] items) {
+//        AgentContainer container = this.getContainerController();
+//        List<AgentController> controllersList = new LinkedList<>();
+//        for(int i = 0; i < items.length; i++) {
+//            Object[] args = new Object[2];
+//            args[0] = items[i].volume;
+//            args[1] = items[i].goal;
+//            try{
+//                controllersList.add(container.createNewAgent(items[i].name, itemPATH, args));
+//            }
+//            catch (Exception e){
+//                System.out.println("Error");
+//            }
+//        }
+//        return controllersList;
+//    }
 
     private  List<AgentController> createShopsControllers(Shop[]shops){
         AgentContainer container = this.getContainerController();
@@ -166,6 +172,7 @@ public class AgentCreator extends Agent {
             args[1] = shops[i].startWork;
             args[2] = shops[i].endWork;
             args[3] = shops[i].orderVolume;
+            args[4] = shops[i].items;
             try{
                 controllerList.add(container.createNewAgent(shops[i].name, shopPATH,args));
             }

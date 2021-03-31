@@ -14,29 +14,13 @@ import jade.tools.sniffer.Message;
 
 import java.util.*;
 
-class Item extends Agent{
+public class Item extends Agent{
     int volume;
-    String goal;
+    AID goal;
 
     public static final  String AGENT_TYPE = "ITEM";
 
-//    private void getIncompatibleTypesFromManager() {
-//        AID managerAID = findManager();
-//        incompatibleTypes = new LinkedList<>();
-//        ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-//        msg.setContent(type);
-//        msg.addReceiver(managerAID);
-//        send(msg);
-//        ACLMessage reply = blockingReceive(MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
-//
-//        String incompatible = reply.getContent();
-//        if(incompatible.equals("NONE"))
-//            return;
-//        String[] arr = incompatible.split("-");
-//        for(String s: arr) {
-//            incompatibleTypes.add(s);
-//        }
-//    }
+
 
     private void giveInfo(ACLMessage msgGetInfo) {
         ACLMessage reply = msgGetInfo.createReply();
@@ -46,16 +30,6 @@ class Item extends Agent{
     }
 
     private void behaviour() {
-        ACLMessage msgGetInfo = receive(MessageTemplate.MatchPerformative(ACLMessage.INFORM));
-        if(msgGetInfo != null) {
-            System.out.println("ITEM" + getLocalName() + " RECEIVED INFORM REQUEST FROM" + msgGetInfo.getSender().getLocalName());
-            giveInfo(msgGetInfo);
-        }
-        ACLMessage isCompatible = receive(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM));
-        if(isCompatible != null) {
-            //System.out.println("ITEM" + getLocalName() + " RECEIVED CONFIRM REQUEST FROM" + isCompatible.getSender().getLocalName());
-            checkIsCompatible(isCompatible);
-        }
     }
 
     protected void setup() {
@@ -63,7 +37,8 @@ class Item extends Agent{
         Object[] args = getArguments();
         try {
             this.volume = (int)args[0];
-            this.goal = args[1].toString();
+
+            this.goal = (AID)args[1];
             String localName = this.getLocalName();
             DFAgentDescription dfd = new DFAgentDescription();
             ServiceDescription sd = new ServiceDescription();
@@ -94,5 +69,6 @@ class Item extends Agent{
             e.printStackTrace();
         }
     }
+
 
 }
