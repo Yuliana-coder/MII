@@ -13,7 +13,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
+
 
 import java.util.Comparator;
 
@@ -31,8 +33,7 @@ public class AgentCreator extends Agent {
     private class DeliveryMan{
         String name;
         int maxVolume;
-        int currentVolume;
-        int[] busyTime;
+        String items;
     }
 
     private class Item {
@@ -198,35 +199,46 @@ public class AgentCreator extends Agent {
     }
 
     private List<AgentController> createDeliveryMansControllers(DeliveryMan[] dms,
-                                                                List<AgentController> itemController,
+                                                                List<AgentController> itemsAgents,
                                                                 Shop[] shops){
         AgentContainer container = this.getContainerController();
         List<AgentController> controllerList = new LinkedList<>();
         int k = 0;
         Arrays.sort(dms, new SortDm());
-        Arrays.sort(shops, new SortShop());
-        //распределение
-        for (int i = 0; i < dms.length; i++){
 
-        }
-        //
+        double l = (double)dms.length;
+        int itemsForDeliveryMan = (int)Math.ceil(l/itemsAgents.size());
 
         for (int i = 0; i < dms.length; i++){
             Object[] args = new Object[3];
             args[0] = dms[i].maxVolume;
-            args[1] = dms[i].currentVolume;
-            args[2] = dms[i].busyTime;
+            String items = "";
+            for (int j = k; (j < k + itemsForDeliveryMan) || (j < itemsControllers.size()); j++){
+                items += itemsAgents.get(j).getName();
+                items += ";";
+            }
+            dms[i].items = items;
+            args[1] = dms[i].items;
             try{
                 controllerList.add(container.createNewAgent(dms[i].name, deliveryManPATH,args));
             }
             catch(Exception e){
                 System.out.println("Error");
             }
-
+            k = k + itemsForDeliveryMan;
         }
         return controllerList;
     }
 
+//    private List<Integer> findItemsByShop (String shopName){
+//        List<Integer> idxs= new ArrayList<>();
+//        for (int i = 0;i < itemsControllers.size(); i++){
+//            if (itemsControllers.get(i).)
+//        }
+//
+//        return idxs;
+//
+//    }
     protected void takeDown(){
         try{
             DFService.deregister(this);
