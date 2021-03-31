@@ -21,6 +21,7 @@ public class Item extends Agent{
     public static final  String AGENT_TYPE = "ITEM";
 
 
+
     private void giveInfo(ACLMessage msgGetInfo) {
         ACLMessage reply = msgGetInfo.createReply();
         reply.setContent(volume+"-"+goal.toString());
@@ -29,7 +30,6 @@ public class Item extends Agent{
     }
 
     private void behaviour() {
-
     }
 
     protected void setup() {
@@ -37,6 +37,7 @@ public class Item extends Agent{
         Object[] args = getArguments();
         try {
             this.volume = (int)args[0];
+
             this.goal = (AID)args[1];
             String localName = this.getLocalName();
             DFAgentDescription dfd = new DFAgentDescription();
@@ -68,5 +69,6 @@ public class Item extends Agent{
             e.printStackTrace();
         }
     }
+
 
 }
