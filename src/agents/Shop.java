@@ -25,7 +25,7 @@ public class Shop extends Agent{
     String[] items;
     List <AID> itemsInOrder;
     List <AgentController> itemsAgents;
-    private String itemPATH = "Agents.Items";
+    private String itemPATH = "agents.Items";
 
     public static final  String AGENT_TYPE = "SHOP";
     int step = 0;
@@ -41,25 +41,18 @@ public class Shop extends Agent{
                     itemsAgents.add(container.createNewAgent(items[i], itemPATH,args));
                 }
                 catch(Exception e){
-                    System.out.println("Error");
+                    System.out.println("Error create item Agent");
                 }
             }
             for (int i = 0; i< itemsAgents.size(); i++){
-                try {
-                    itemsInOrder.add(getItemAIDByLocalName(itemsAgents.get(i).getName()));
-                }
-                catch(Exception e){
-                        System.out.println("Error");
-                }
+                itemsInOrder.add(getItemAIDByLocalName(itemsAgents.get(i).getName()));
             }
         }
         else{
-
+            
             System.out.println("Go on");
         }
     }
-
-
 
     AID getItemAIDByLocalName(String name) {
         DFAgentDescription dfd = new DFAgentDescription();
@@ -70,8 +63,7 @@ public class Shop extends Agent{
         SearchConstraints ALL = new SearchConstraints();
         ALL.setMaxResults(new Long(-1));
 
-        try
-        {
+        try{
             DFAgentDescription[] result = DFService.search(this, dfd, ALL);
             AID[] agents = new AID[result.length];
             for (int i=0; i<result.length; i++) {
@@ -79,14 +71,10 @@ public class Shop extends Agent{
                 if(agents[i].getName().equals(name))
                     return agents[i];
             }
-
-
         }
         catch (FIPAException fe) { fe.printStackTrace(); }
-
         return null;
     }
-
 
     protected void setup(){
         System.out.println("Shop " +  getLocalName()+" STARTED");
@@ -97,30 +85,27 @@ public class Shop extends Agent{
             this.startWork = (int)args[2];
             this.endWork = (int)args[3];
             this.items = ((String)args[4]).split(";");
-            System.out.println("HUI");
-//            String localName = this.getLocalName();
-//            DFAgentDescription dfd = new DFAgentDescription();
-//            ServiceDescription sd = new ServiceDescription();
-//            dfd.setName(getAID());
-//            sd.setName(getLocalName());
-//            sd.setType(AGENT_TYPE);
-//            dfd.addServices(sd);
-//            //getIncompatibleTypesFromManager();
-//            addBehaviour(new Behaviour() {
-//                @Override
-//                public void action() {
-//                    behaviour();
-//                }
-//                @Override
-//                public boolean done(){
-//                    return false;
-//                }
-//            });
-//            DFService.register(this, dfd);
-//            System.out.println(getLocalName()+" REGISTERED WITH THE DF");
-        }
-        catch (Exception e) {
-            System.out.println("ERROR HUI");
+            String localName = this.getLocalName();
+            DFAgentDescription dfd = new DFAgentDescription();
+            ServiceDescription sd = new ServiceDescription();
+            dfd.setName(getAID());
+            sd.setName(getLocalName());
+            sd.setType(AGENT_TYPE);
+            dfd.addServices(sd);
+            //getIncompatibleTypesFromManager();
+            addBehaviour(new Behaviour() {
+                @Override
+                public void action() {
+                    behaviour();
+                }
+                @Override
+                public boolean done(){
+                    return false;
+                }
+            });
+            DFService.register(this, dfd);
+            System.out.println(getLocalName()+" REGISTERED WITH THE DF");
+        } catch (FIPAException e) {
             e.printStackTrace();
         }
     }
