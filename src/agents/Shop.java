@@ -54,9 +54,12 @@ public class Shop extends Agent{
             }
         }
         else{
+
             System.out.println("Go on");
         }
     }
+
+
 
     AID getItemAIDByLocalName(String name) {
         DFAgentDescription dfd = new DFAgentDescription();

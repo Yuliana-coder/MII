@@ -19,9 +19,46 @@ public class DeliveryMan extends Agent{
     int maxVolume;
     String items;
     public static final  String AGENT_TYPE = "DELIVERYMAN";
+    AID[] shops;
+    int[] shopOrderVolums;
+    int step = 0;
 
     public void behaviour(){
+        if (step == 0){
+            //отправляем запрос на получение orderVolume у всех магазинов
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            for(int i = 0; i < shops.length; i++){
+                msg.addReceiver(shops[i]);
+               // msg.setLanguage(“English”);
+            }
+            msg.setContent("GET_ORDER_VOLUME");
+            send(msg);
+            //получаем
+            ACLMessage
+        }
 
+
+    }
+
+    //поиск агентов - магазинов
+    AID[] searchShops() {
+        DFAgentDescription dfd = new DFAgentDescription();
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType("SHOP");
+        dfd.addServices(sd);
+
+        SearchConstraints ALL = new SearchConstraints();
+        ALL.setMaxResults(new Long(-1));
+        try{
+            DFAgentDescription[] result = DFService.search(this, dfd, ALL);
+            AID[] agents = new AID[result.length];
+            for (int i=0; i<result.length; i++)
+                agents[i] = result[i].getName();
+            return agents;
+
+        }
+        catch (FIPAException fe) { }
+        return null;
     }
 
     protected void setup() {
@@ -35,6 +72,10 @@ public class DeliveryMan extends Agent{
             dfd.setName(getAID());
             sd.setName(getLocalName());
             sd.setType(AGENT_TYPE);
+
+            //ищем агентов магазинов
+            this.shops = searchShops();
+
             dfd.addServices(sd);
             addBehaviour(new CyclicBehaviour() {
                 @Override

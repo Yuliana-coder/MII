@@ -168,7 +168,7 @@ public class AgentCreator extends Agent {
 //        return controllersList;
 //    }
 
-    private  List<AgentController> createShopsControllers(Shop[]shops){
+    private  List<AgentController> createShopsControllers(Shop[] shops){
         System.out.println("WORK WORK");
         AgentContainer container = this.getContainerController();
         List<AgentController> controllerList = new LinkedList<>();
@@ -212,7 +212,8 @@ public class AgentCreator extends Agent {
         }
     }
 
-    private List<AgentController> createDeliveryMansControllers(DeliveryMan[] dms, Shop[] shops){
+    private List<AgentController> createDeliveryMansControllers(DeliveryMan[] dms,
+                                                                Shop[] shops){
         AgentContainer container = this.getContainerController();
         List<AgentController> controllerList = new LinkedList<>();
         int k = 0;
