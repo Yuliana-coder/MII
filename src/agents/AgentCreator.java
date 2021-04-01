@@ -53,15 +53,16 @@ public class AgentCreator extends Agent {
             DFAgentDescription dfd = new DFAgentDescription();
             createAgents(this.fileName);
             try {
+                for (AgentController shop : shopsControllers) {
+                    shop.start();
+                }
+                Thread.sleep(1000);
+
                 for (AgentController deliveryMan : deliveryMansControllers) {
                     deliveryMan.start();
                 }
                 Thread.sleep(1000);
 
-                for (AgentController shop : shopsControllers) {
-                    shop.start();
-                }
-                Thread.sleep(1000);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -82,17 +83,17 @@ public class AgentCreator extends Agent {
         try {
             FileReader reader = new FileReader(file);
             BufferedReader buffreader = new BufferedReader(reader);
-            int count = Integer.valueOf(buffreader.readLine());
+            int count = Integer.parseInt(buffreader.readLine());
             myDeliveryMans = new DeliveryMan[count];
             for (int i = 0; i < count; i++) {
                 String line = buffreader.readLine();
                 String[] data = line.split(";");
                 DeliveryMan dm = new DeliveryMan();
                 dm.name = data[0];
-                dm.maxVolume = Integer.valueOf(data[1]);
+                dm.maxVolume = Integer.parseInt(data[1]);
                 myDeliveryMans[i] = dm;
             }
-            count = Integer.valueOf(buffreader.readLine());
+            count = Integer.parseInt(buffreader.readLine());
             myShops = new Shop[count];
             int orderVolume = 0;
             for (int i = 0; i < count; i++) {
@@ -100,16 +101,16 @@ public class AgentCreator extends Agent {
                 String[] data = line.split(";");
                 Shop shop = new Shop();
                 shop.name = data[0];
-                shop.timeNeedToDelivery = Integer.valueOf(data[1]);
-                shop.startWork = Integer.valueOf(data[2]);
-                shop.endWork =Integer.valueOf(data[3]);
-                int count1 = Integer.valueOf(data[4]);
+                shop.timeNeedToDelivery = Integer.parseInt(data[1]);
+                shop.startWork = Integer.parseInt(data[2]);
+                shop.endWork =Integer.parseInt(data[3]);
+                int count1 = Integer.parseInt(data[4]);
                 String items = "";
                 for(int j = 0; j < count1; j++){
                     line = buffreader.readLine();
                     data = line.split(";");
                     items += (data[0] + ";" + data[1] + ";");
-                    orderVolume = orderVolume + Integer.valueOf(data[1]);
+                    orderVolume = orderVolume + Integer.parseInt(data[1]);
                 }
                 shop.orderVolume = orderVolume;
                 shop.items = items;

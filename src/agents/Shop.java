@@ -26,6 +26,7 @@ public class Shop extends Agent{
     List <AID> itemsInOrder;
     List <AgentController> itemsAgents;
     private String itemPATH = "agents.Item";
+    private boolean order_getted = false;
 
     public static final  String AGENT_TYPE = "SHOP";
     int step = 0;
@@ -33,16 +34,33 @@ public class Shop extends Agent{
         if (step == 0){
             AgentContainer container = this.getContainerController();
             itemsAgents = new LinkedList<>();
+            itemsInOrder = new LinkedList<>();
             for (int i = 0; i < items.length; i+=2){
                 Object[] args = new Object[2];
                 args[0] = items[i +1]; //volume
                 args[1] = this.getAID(); //
                 try{
                     itemsAgents.add(container.createNewAgent(items[i], itemPATH,args));
-                    itemsInOrder.add(getItemAIDByLocalName(items[i]));
+                    //itemsInOrder.add(getItemAIDByLocalName(itemsAgents.get(i/2).getName()));
                 }
                 catch(Exception e) {
                     System.out.println("Error create item Agent");
+                }
+            }
+            try{
+                for (AgentController item: itemsAgents) {
+                    item.start();
+                }
+                Thread.sleep(1000);
+            }catch (Exception e) {
+                e.printStackTrace();
+            }
+            for (int i = 0; i < itemsAgents.size(); i++){
+                try{
+                    itemsInOrder.add(getItemAIDByLocalName(items[i*2]));
+                }
+                catch(Exception e) {
+                    System.out.println("Error add item AID");
                 }
             }
             step +=1;
@@ -55,7 +73,57 @@ public class Shop extends Agent{
                 sendDeliveryManOrderVolume(msgGetOrderVolume);
             }
             System.out.println("Go on");
+            ACLMessage msgGetPropose = receive(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE));
+            if (msgGetPropose != null){
+                System.out.println("SHOP " + getLocalName() + " RECEIVED PROPOSE FROM " +
+                        msgGetPropose.getSender().getLocalName());
+                if (order_getted == false){
+                    if (msgGetPropose.getContent().equals("ALL_ITEMS")){
+                        order_getted = true;
+                    }
+                    acceptPropose(msgGetPropose);
+                }
+                else{
+                    rejectPropose(msgGetPropose);
+                }
+            }
         }
+    }
+
+    private void acceptPropose(ACLMessage propose){
+        if (propose.getContent().equals("ALL_ITEMS")){
+            ACLMessage reply = propose.createReply();
+            reply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+            String content = "";
+            for (int i = 0; i < itemsInOrder.size(); i++){
+                try{
+                    //отправляем запрос на получение сообщения о объеме товара
+                    ACLMessage getVolumeInfoMsg = new ACLMessage(ACLMessage.REQUEST);
+                    getVolumeInfoMsg.addReceiver(itemsInOrder.get(i));
+                    getVolumeInfoMsg.setContent("GET_VOLUME");
+                    send(getVolumeInfoMsg);
+
+                    //ждем ответ
+                    ACLMessage volumeMsg = this.blockingReceive(MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+                    int volume = Integer.parseInt(volumeMsg.getContent());
+                    String itemAgentName = itemsInOrder.get(i).getName().split("@")[0];
+                    content += (itemAgentName + ";" + String.valueOf(volume) + ";");
+                }
+                catch (Exception e) {
+                    System.out.println("Error get volume");
+                    e.printStackTrace();
+                }
+            }
+            reply.setContent(content);
+            send(reply);
+        }
+    }
+
+    private void rejectPropose(ACLMessage propose){
+        ACLMessage reply = propose.createReply();
+        reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+        reply.setContent("REJECT");
+        send(reply);
     }
 
     private void sendDeliveryManOrderVolume(ACLMessage msg){
@@ -71,19 +139,24 @@ public class Shop extends Agent{
         sd.setType("ITEM");
         dfd.addServices(sd);
 
-        SearchConstraints ALL = new SearchConstraints();
-        ALL.setMaxResults(new Long(-1));
+        //SearchConstraints ALL = new SearchConstraints();
+        //ALL.setMaxResults(2L);
 
         try{
-            DFAgentDescription[] result = DFService.search(this, dfd, ALL);
+            DFAgentDescription[] result = DFService.search(this, dfd);
             AID[] agents = new AID[result.length];
             for (int i=0; i<result.length; i++) {
                 agents[i] = result[i].getName();
-                if(agents[i].getName().equals(name))
+                String agentName = agents[i].getName().split("@")[0];
+                if(agentName.equals(name))
                     return agents[i];
             }
         }
-        catch (FIPAException fe) { fe.printStackTrace(); }
+        catch (FIPAException fe) {
+            System.out.println("Error");
+            fe.printStackTrace();
+        }
+        System.out.println("null");
         return null;
     }
 
@@ -91,10 +164,10 @@ public class Shop extends Agent{
         System.out.println("Shop " +  getLocalName()+" STARTED");
         Object[] args = getArguments();
         try {
-            this.orderVolume = (int)args[0];
-            this.timeNeedToDelivery = (int)args[1];
-            this.startWork = (int)args[2];
-            this.endWork = (int)args[3];
+            this.timeNeedToDelivery = Integer.parseInt(args[0].toString());
+            this.startWork = Integer.parseInt(args[1].toString());
+            this.endWork = Integer.parseInt(args[2].toString());
+            this.orderVolume = Integer.parseInt(args[3].toString());
             this.items = ((String)args[4]).split(";");
             String localName = this.getLocalName();
             DFAgentDescription dfd = new DFAgentDescription();

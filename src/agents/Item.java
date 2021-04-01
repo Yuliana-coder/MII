@@ -16,7 +16,7 @@ import java.util.*;
 
 public class Item extends Agent{
     int volume;
-    AID goal;
+    String goal;
 
     public static final  String AGENT_TYPE = "ITEM";
 
@@ -24,20 +24,24 @@ public class Item extends Agent{
 
     private void giveInfo(ACLMessage msgGetInfo) {
         ACLMessage reply = msgGetInfo.createReply();
-        reply.setContent(volume+"-"+goal.toString());
-        reply.setPerformative(ACLMessage.PROXY);
+        reply.setContent(String.valueOf(volume));
+        reply.setPerformative(ACLMessage.INFORM);
         send(reply);
     }
 
     private void behaviour() {
+        ACLMessage infoRequest = receive(MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
+        if (infoRequest != null){
+            giveInfo(infoRequest);
+        }
     }
 
     protected void setup() {
         System.out.println("ITEM " +  getLocalName()+" STARTED");
         Object[] args = getArguments();
         try {
-            this.volume = (int)args[0];
-            this.goal = (AID)args[1];
+            this.volume = Integer.valueOf(args[0].toString());
+            this.goal = args[1].toString();
             String localName = this.getLocalName();
             DFAgentDescription dfd = new DFAgentDescription();
             ServiceDescription sd = new ServiceDescription();
@@ -45,7 +49,7 @@ public class Item extends Agent{
             sd.setName(getLocalName());
             sd.setType(AGENT_TYPE);
             dfd.addServices(sd);
-            //getIncompatibleTypesFromManager();
+
             addBehaviour(new CyclicBehaviour() {
                 @Override
                 public void action() {
