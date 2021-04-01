@@ -12,10 +12,13 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.tools.sniffer.Message;
 
+
 import java.util.*;
 
 public class DeliveryMan extends Agent{
     List <AID> itemsInCar;
+    List <AID> shopsDel;
+    ArrayList <int> volumes;
     int maxVolume;
     int currentVolume = 0;
     public static final  String AGENT_TYPE = "DELIVERYMAN";
@@ -28,6 +31,9 @@ public class DeliveryMan extends Agent{
     public void behaviour(){
         if (step == 0){
             itemsInCar = new LinkedList<>();
+            shopsDel = new LinkedList<>();
+            volumes = new ArrayList<int>();
+
             shopOrderVolums = new int[shops.length];
 
             //отправляем запрос на получение orderVolume у всех магазинов
@@ -55,7 +61,8 @@ public class DeliveryMan extends Agent{
                 whole_order = searchOrder();
             }
             else{
-                searchItems();
+                //searchItems();
+                step ++;
             }
             System.out.println("DM " + getLocalName() + " CURRENT VOLUME " +  String.valueOf(this.currentVolume));
         }
@@ -101,46 +108,128 @@ public class DeliveryMan extends Agent{
             }
         }
         if (order != -1){
-            // отправляем запрос на доставку заказа
-            ACLMessage msgPropToDel = new ACLMessage(ACLMessage.PROPOSE);
-            msgPropToDel.addReceiver(shops[order]);
-            msgPropToDel.setContent("ALL_ITEMS");
-            send(msgPropToDel);
-
-            // ждем ответ от магазина
-            ACLMessage msgReplyPropose = this.blockingReceive();
-            if (msgReplyPropose.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
-                System.out.println("DM " + getLocalName() + " RECEIVED ACCEPT FROM " +
-                        msgReplyPropose.getSender().getLocalName());
-                String[] itemsInOrder = msgReplyPropose.getContent().split(";");
-                currentVolume += maxOrderVolume;
-                for (int i = 0; i < itemsInOrder.length; i +=2){
-                    itemsInCar.add(getItemAIDByLocalName(itemsInOrder[i]));
-                }
-            }
-            else if (msgReplyPropose.getPerformative() == ACLMessage.REJECT_PROPOSAL){
-                System.out.println("DM " + getLocalName() + " RECEIVED REJECT FROM " +
-                        msgReplyPropose.getSender().getLocalName());
-            }
-            shopOrderVolums[order] = -1;
+            sentPropose(order, maxOrderVolume);
             return true;
         }
         else{
-            return false;
+            for (int i = 0; i < shopOrderVolums.length; i++){
+                if ((shopOrderVolums[i] != -1) && (shopOrderVolums[i] <= this.maxVolume)){
+                    if (shopOrderVolums[i] >= maxOrderVolume)
+                        maxOrderVolume = shopOrderVolums[i];
+                    order = i;
+                }
+            }
+            if (order != -1){
+                sentPropose(order, maxOrderVolume);
+                return true;
+            }
+            else{
+                return false;
+            }
         }
+    }
+
+    private void sentPropose(int order, int maxOrderVolume){
+        // отправляем запрос на доставку заказа
+        ACLMessage msgPropToDel = new ACLMessage(ACLMessage.PROPOSE);
+        msgPropToDel.addReceiver(shops[order]);
+        msgPropToDel.setContent("ALL_ITEMS");
+        send(msgPropToDel);
+
+        // ждем ответ от магазина
+        ACLMessage msgReplyPropose = this.blockingReceive();
+        if (msgReplyPropose.getPerformative() == ACLMessage.ACCEPT_PROPOSAL){
+            System.out.println("DM " + getLocalName() + " RECEIVED ACCEPT FROM " +
+                    msgReplyPropose.getSender().getLocalName());
+            String[] itemsInOrder = msgReplyPropose.getContent().split(";");
+            if (currentVolume > maxOrderVolume){
+                currentVolume = maxOrderVolume;
+            }
+            volumes.add(maxOrderVolume);
+            shopsDel.add(shops[order]);
+            for (int i = 0; i < itemsInOrder.length; i +=2){
+                itemsInCar.add(getItemAIDByLocalName(itemsInOrder[i]));
+            }
+        }
+        else if (msgReplyPropose.getPerformative() == ACLMessage.REJECT_PROPOSAL){
+            System.out.println("DM " + getLocalName() + " RECEIVED REJECT FROM " +
+                    msgReplyPropose.getSender().getLocalName());
+        }
+        shopOrderVolums[order] = -1;
+    }
+
+    //кортеж из названия айтема и его объема
+    private class Pair{
+        String a;
+        int b;
+    }
+    private class SortPair implements Comparator<Pair>{
+        public int compare(Pair x, Pair y){
+            if (x.b > y.b)
+                return -1;
+            else if(x.b == y.b)
+                return 0;
+            else
+                return 1;
+        }
+    }
+
+    private Pair[] sortItems(String[] items){
+        Pair[] its = new Pair[items.length/2];
+        for (int i = 0; i < items.length; i+=2) {
+            Pair item = new Pair();
+            item.a = items[i];
+            item.b = Integer.parseInt(items[i+1]);
+            its[i/2] = item;
+        }
+        //Arrays.sort(its, new SortPair());
+
+        return its;
     }
 
     private void searchItems(){
         for (int i = 0; i < shopOrderVolums.length; i++){
             if (shopOrderVolums[i] != -1){
                 // отправляем запрос на получение списка товаров из заказа
-                ACLMessage msgPropToDel = new ACLMessage(ACLMessage.REQUEST);
+                ACLMessage msgReq = new ACLMessage(ACLMessage.REQUEST);
+                msgReq.addReceiver(shops[i]);
+                msgReq.setContent("GET_ITEMS_INFO");
+                send(msgReq);
+
+                ACLMessage msgItemsInform = this.blockingReceive(MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+                Pair[] items = sortItems(msgItemsInform.getContent().split(";"));
+
+                int maxCurrentVolume = maxVolume - currentVolume;
+                int max = findMaxGettedVolume(items, maxCurrentVolume);
+                ACLMessage msgPropToDel = new ACLMessage(ACLMessage.PROPOSE);
                 msgPropToDel.addReceiver(shops[i]);
-                msgPropToDel.setContent("GET_ITEMS_INFO");
+                msgPropToDel.setContent(String.valueOf(max));
                 send(msgPropToDel);
+
             }
         }
     }
+
+    private  int findMaxGettedVolume(Pair[] items, int maxVolume){
+        int n = items.length;
+        int dp[][] = new int [maxVolume+1][n+1];
+        for (int j = 1; j < n; j++){
+            for(int w=1; w <= maxVolume; w++){
+                if (items[j-1].b <= w){
+                    dp[w][j] = Math.max(dp[w][j-1], dp[w-items[j-1].b][j-1] + 1);
+                }
+                else{
+                    dp[w][j] = dp[w][j-1];
+                }
+            }
+        }
+        return dp[maxVolume][n];
+
+    }
+
+
+
+
 
     //поиск агентов - магазинов
     AID[] searchShops() {

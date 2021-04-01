@@ -66,13 +66,20 @@ public class Shop extends Agent{
             step +=1;
         }
         else{
-            ACLMessage msgGetOrderVolume = receive(MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
-            if (msgGetOrderVolume != null){
-                System.out.println("SHOP " + getLocalName() + " RECEIVED INFORM REQUEST FROM " +
-                        msgGetOrderVolume.getSender().getLocalName());
-                sendDeliveryManOrderVolume(msgGetOrderVolume);
+            ACLMessage msgRequest = receive(MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
+            if (msgRequest != null){
+                if (msgRequest.getContent().equals("GET_ORDER_VOLUME")){
+                    System.out.println("SHOP " + getLocalName() + " RECEIVED INFORM REQUEST FROM " +
+                            msgRequest.getSender().getLocalName());
+                    sendDeliveryManOrderVolume(msgRequest);
+                }
+                else if(msgRequest.getContent().equals("GET_ITEMS_INFO")){
+                    System.out.println("SHOP " + getLocalName() + " RECEIVED ITEMS INFORM REQUEST FROM " +
+                            msgRequest.getSender().getLocalName());
+                    sendDeliveryManItemsInform(msgRequest);
+                }
             }
-            System.out.println("Go on");
+            //System.out.println("Go on");
             ACLMessage msgGetPropose = receive(MessageTemplate.MatchPerformative(ACLMessage.PROPOSE));
             if (msgGetPropose != null){
                 System.out.println("SHOP " + getLocalName() + " RECEIVED PROPOSE FROM " +
@@ -80,8 +87,11 @@ public class Shop extends Agent{
                 if (order_getted == false){
                     if (msgGetPropose.getContent().equals("ALL_ITEMS")){
                         order_getted = true;
+                        acceptPropose(msgGetPropose);
                     }
-                    acceptPropose(msgGetPropose);
+                    else{
+
+                    }
                 }
                 else{
                     rejectPropose(msgGetPropose);
@@ -117,6 +127,10 @@ public class Shop extends Agent{
             reply.setContent(content);
             send(reply);
         }
+        else{
+            int volume = Integer.parseInt(propose.getContent());
+
+        }
     }
 
     private void rejectPropose(ACLMessage propose){
@@ -130,6 +144,33 @@ public class Shop extends Agent{
         ACLMessage reply = msg.createReply();
         reply.setContent(String.valueOf(orderVolume));
         reply.setPerformative(ACLMessage.INFORM);
+        send(reply);
+    }
+
+    private void sendDeliveryManItemsInform(ACLMessage msg){
+        ACLMessage reply = msg.createReply();
+        reply.setPerformative(ACLMessage.INFORM);
+        String content = "";
+        for (int i = 0; i < itemsInOrder.size(); i++){
+            try{
+                //отправляем запрос на получение сообщения о объеме товара
+                ACLMessage getVolumeInfoMsg = new ACLMessage(ACLMessage.REQUEST);
+                getVolumeInfoMsg.addReceiver(itemsInOrder.get(i));
+                getVolumeInfoMsg.setContent("GET_VOLUME");
+                send(getVolumeInfoMsg);
+
+                //ждем ответ
+                ACLMessage volumeMsg = this.blockingReceive(MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+                int volume = Integer.parseInt(volumeMsg.getContent());
+                String itemAgentName = itemsInOrder.get(i).getName().split("@")[0];
+                content += (itemAgentName + ";" + String.valueOf(volume) + ";");
+            }
+            catch (Exception e) {
+                System.out.println("Error get volume");
+                e.printStackTrace();
+            }
+        }
+        reply.setContent(content);
         send(reply);
     }
 
