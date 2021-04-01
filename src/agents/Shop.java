@@ -45,7 +45,12 @@ public class Shop extends Agent{
                 }
             }
             for (int i = 0; i< itemsAgents.size(); i++){
-                itemsInOrder.add(getItemAIDByLocalName(itemsAgents.get(i).getName()));
+                try {
+                    itemsInOrder.add(getItemAIDByLocalName(itemsAgents.get(i).getName()));
+                }
+                catch(Exception e){
+                        System.out.println("Error");
+                }
             }
         }
         else{
@@ -89,27 +94,30 @@ public class Shop extends Agent{
             this.startWork = (int)args[2];
             this.endWork = (int)args[3];
             this.items = ((String)args[4]).split(";");
-            String localName = this.getLocalName();
-            DFAgentDescription dfd = new DFAgentDescription();
-            ServiceDescription sd = new ServiceDescription();
-            dfd.setName(getAID());
-            sd.setName(getLocalName());
-            sd.setType(AGENT_TYPE);
-            dfd.addServices(sd);
-            //getIncompatibleTypesFromManager();
-            addBehaviour(new Behaviour() {
-                @Override
-                public void action() {
-                    behaviour();
-                }
-                @Override
-                public boolean done(){
-                    return false;
-                }
-            });
-            DFService.register(this, dfd);
-            System.out.println(getLocalName()+" REGISTERED WITH THE DF");
-        } catch (FIPAException e) {
+            System.out.println("HUI");
+//            String localName = this.getLocalName();
+//            DFAgentDescription dfd = new DFAgentDescription();
+//            ServiceDescription sd = new ServiceDescription();
+//            dfd.setName(getAID());
+//            sd.setName(getLocalName());
+//            sd.setType(AGENT_TYPE);
+//            dfd.addServices(sd);
+//            //getIncompatibleTypesFromManager();
+//            addBehaviour(new Behaviour() {
+//                @Override
+//                public void action() {
+//                    behaviour();
+//                }
+//                @Override
+//                public boolean done(){
+//                    return false;
+//                }
+//            });
+//            DFService.register(this, dfd);
+//            System.out.println(getLocalName()+" REGISTERED WITH THE DF");
+        }
+        catch (Exception e) {
+            System.out.println("ERROR HUI");
             e.printStackTrace();
         }
     }

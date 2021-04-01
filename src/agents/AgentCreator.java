@@ -26,9 +26,9 @@ public class AgentCreator extends Agent {
     //private List<AgentController> itemsControllers = new LinkedList<>();
     private List<AgentController> shopsControllers = new LinkedList<>();
     private String fileName;
-    private String deliveryManPATH = "Agents.DeliveryMan";
+    private String deliveryManPATH = "agents.DeliveryMan";
     //private String itemPATH = "Agents.Items";
-    private String shopPATH = "Agents.Shop";
+    private String shopPATH = "agents.Shop";
 
     private class DeliveryMan{
         String name;
@@ -55,7 +55,7 @@ public class AgentCreator extends Agent {
         System.out.println("ITEM " + getLocalName() + " STARTED");
         Object[] args = getArguments();
         try {
-            System.out.println("ARGUMENTS LENGTH:" + args.length + "ARGUMENTS:" + args.toString() + "MY NAME:" + this.getName());
+            System.out.println("ARGUMENTS LENGTH:" + args.length + "ARGUMENTS:" + args[0].toString() + "MY NAME:" + this.getName());
             this.fileName = args[0].toString();
             // create the agent descrption of itself
             DFAgentDescription dfd = new DFAgentDescription();
@@ -94,7 +94,9 @@ public class AgentCreator extends Agent {
         try {
             FileReader reader = new FileReader(file);
             BufferedReader buffreader = new BufferedReader(reader);
+            System.out.println("buffreader ");
             int count = Integer.valueOf(buffreader.readLine());
+            System.out.println("count ");
             myDeliveryMans = new DeliveryMan[count];
             for (int i = 0; i < count; i++) {
                 String line = buffreader.readLine();
@@ -104,12 +106,15 @@ public class AgentCreator extends Agent {
                 dm.maxVolume = Integer.valueOf(data[1]);
                 myDeliveryMans[i] = dm;
             }
-            String[] counts = buffreader.readLine().split(";");
-            myShops = new Shop[Integer.valueOf(counts[0])];
+            System.out.println("for1 ");
+           // String[] counts = buffreader.readLine().split(";");
+            count = Integer.valueOf(buffreader.readLine());
+            myShops = new Shop[count];
+            System.out.println("myShops ");
             //myItems = new Item[Integer.valueOf(counts[1])];
             //int j = 0;
             int orderVolume = 0;
-            for (int i = 0; i < Integer.valueOf(counts[0]); i++) {
+            for (int i = 0; i < count; i++) {
                 String line = buffreader.readLine();
                 String[] data = line.split(";");
                 Shop shop = new Shop();
@@ -117,9 +122,9 @@ public class AgentCreator extends Agent {
                 shop.timeNeedToDelivery = Integer.valueOf(data[1]);
                 shop.startWork = Integer.valueOf(data[2]);
                 shop.endWork =Integer.valueOf(data[3]);
-                count = Integer.valueOf(data[4]);
+                int count1 = Integer.valueOf(data[4]);
                 String items = "";
-                for(int j = 0; j < count; j++){
+                for(int j = 0; j < count1; j++){
                     line = buffreader.readLine();
                     data = line.split(";");
 //                    Item item = new Item();
@@ -139,7 +144,7 @@ public class AgentCreator extends Agent {
             }
 
         } catch (Exception e) {
-            System.out.println("Error");
+            System.out.println("Error CREATE");
         }
         //itemsControllers = createItemsControllers(myItems);
         shopsControllers= createShopsControllers(myShops);
@@ -164,10 +169,11 @@ public class AgentCreator extends Agent {
 //    }
 
     private  List<AgentController> createShopsControllers(Shop[]shops){
+        System.out.println("WORK WORK");
         AgentContainer container = this.getContainerController();
         List<AgentController> controllerList = new LinkedList<>();
         for (int i = 0; i < shops.length; i++){
-            Object[] args = new Object[4];
+            Object[] args = new Object[5];
             args[0] = shops[i].timeNeedToDelivery;
             args[1] = shops[i].startWork;
             args[2] = shops[i].endWork;
@@ -180,6 +186,7 @@ public class AgentCreator extends Agent {
                 System.out.println("Error");
             }
         }
+        System.out.println("WORK WORK");
         return controllerList;
     }
 
@@ -205,25 +212,23 @@ public class AgentCreator extends Agent {
         }
     }
 
-    private List<AgentController> createDeliveryMansControllers(DeliveryMan[] dms,
-                                                                List<AgentController> itemsAgents,
-                                                                Shop[] shops){
+    private List<AgentController> createDeliveryMansControllers(DeliveryMan[] dms, Shop[] shops){
         AgentContainer container = this.getContainerController();
         List<AgentController> controllerList = new LinkedList<>();
         int k = 0;
         Arrays.sort(dms, new SortDm());
 
         double l = (double)dms.length;
-        int itemsForDeliveryMan = (int)Math.ceil(l/itemsAgents.size());
+       // int itemsForDeliveryMan = (int)Math.ceil(l/itemsAgents.size());
 
         for (int i = 0; i < dms.length; i++){
             Object[] args = new Object[3];
             args[0] = dms[i].maxVolume;
             String items = "";
-            for (int j = k; (j < k + itemsForDeliveryMan) || (j < itemsControllers.size()); j++){
+            /*for (int j = k; (j < k + itemsForDeliveryMan) || (j < itemsControllers.size()); j++){
                 items += itemsAgents.get(j).getName();
                 items += ";";
-            }
+            }*/
             dms[i].items = items;
             args[1] = dms[i].items;
             try{
@@ -232,7 +237,7 @@ public class AgentCreator extends Agent {
             catch(Exception e){
                 System.out.println("Error");
             }
-            k = k + itemsForDeliveryMan;
+            //k = k + itemsForDeliveryMan;
         }
         return controllerList;
     }
