@@ -37,7 +37,6 @@ public class Item extends Agent{
         Object[] args = getArguments();
         try {
             this.volume = (int)args[0];
-
             this.goal = (AID)args[1];
             String localName = this.getLocalName();
             DFAgentDescription dfd = new DFAgentDescription();

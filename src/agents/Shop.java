@@ -25,7 +25,7 @@ public class Shop extends Agent{
     String[] items;
     List <AID> itemsInOrder;
     List <AgentController> itemsAgents;
-    private String itemPATH = "agents.Items";
+    private String itemPATH = "agents.Item";
 
     public static final  String AGENT_TYPE = "SHOP";
     int step = 0;
@@ -39,19 +39,30 @@ public class Shop extends Agent{
                 args[1] = this.getAID(); //
                 try{
                     itemsAgents.add(container.createNewAgent(items[i], itemPATH,args));
+                    itemsInOrder.add(getItemAIDByLocalName(items[i]));
                 }
-                catch(Exception e){
+                catch(Exception e) {
                     System.out.println("Error create item Agent");
                 }
             }
-            for (int i = 0; i< itemsAgents.size(); i++){
-                itemsInOrder.add(getItemAIDByLocalName(itemsAgents.get(i).getName()));
-            }
+            step +=1;
         }
         else{
-            
+            ACLMessage msgGetOrderVolume = receive(MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
+            if (msgGetOrderVolume != null){
+                System.out.println("SHOP " + getLocalName() + " RECEIVED INFORM REQUEST FROM " +
+                        msgGetOrderVolume.getSender().getLocalName());
+                sendDeliveryManOrderVolume(msgGetOrderVolume);
+            }
             System.out.println("Go on");
         }
+    }
+
+    private void sendDeliveryManOrderVolume(ACLMessage msg){
+        ACLMessage reply = msg.createReply();
+        reply.setContent(String.valueOf(orderVolume));
+        reply.setPerformative(ACLMessage.INFORM);
+        send(reply);
     }
 
     AID getItemAIDByLocalName(String name) {

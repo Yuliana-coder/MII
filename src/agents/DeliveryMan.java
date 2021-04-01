@@ -29,12 +29,22 @@ public class DeliveryMan extends Agent{
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             for(int i = 0; i < shops.length; i++){
                 msg.addReceiver(shops[i]);
-               // msg.setLanguage(“English”);
             }
             msg.setContent("GET_ORDER_VOLUME");
             send(msg);
-            //получаем
-            ACLMessage
+            //получаем ответы
+            for (int i = 0; i < shops.length; i++){
+                ACLMessage recvMes = receive(MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+                if (recvMes!=null) {
+                    System.out.println("DM " + getLocalName() + " RECEIVED INFORM FROM " +
+                           recvMes.getSender().getLocalName());
+                    int volume = Integer.valueOf(recvMes.getContent());
+                    //int shop = recvMes.getSender();
+                    shopOrderVolums[i] = volume;
+                }
+
+            }
+
         }
 
 
